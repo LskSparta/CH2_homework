@@ -71,6 +71,5 @@ Testing/
 *.idb
 *.lastbuildstate
 *.tlog
-*.sln
 *.vcxproj
 *.filters
