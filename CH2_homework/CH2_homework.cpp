@@ -71,8 +71,15 @@ void showStatus()
 
 void AddItemToInventory(ItemInfo* newItem, int itemCount = 1) {
     bool isFirst = false;
-    auto itr = inventory.find(newItem);
-    if (itr == inventory.end()) {
+    auto itr = inventory.begin();
+    bool isContain = false;
+    for (itr; itr != inventory.end(); itr++) {
+        if (itr->first->GetName() == newItem->GetName()) {
+            isContain = true;
+            break;
+        }
+    }
+    if (!isContain) {
         inventory.insert({ newItem, itemCount });
         isFirst = true;
     }
@@ -108,8 +115,15 @@ vector<ItemInfo*> GetConsumableItem() {
 }
 
 void ConsumeItemInInventory(ItemInfo* consumeItem, Player* target) {
-    auto itr = inventory.find(consumeItem);
-    if (itr == inventory.end()) {
+    auto itr = inventory.begin();
+    bool isContain = false;
+    for (itr; itr != inventory.end(); itr++) {
+        if (itr->first->GetName() == consumeItem->GetName()) {
+            isContain = true;
+            break;
+        }
+    }
+    if (!isContain) {
         cout << "에러 : 해당 아이템은 소지하고 있지 않습니다" << endl;
         return;
     }
