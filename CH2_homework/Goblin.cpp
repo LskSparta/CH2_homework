@@ -12,9 +12,6 @@ void Goblin::Attack(Player* player)
 
 ItemInfo Goblin::DropItem()
 {
-    ItemInfo dropItem;
-    dropItem.consumable = false;
-    dropItem.name = "고블린 토벌 증거";
-    dropItem.price = 20;
+    ItemInfo dropItem = ItemInfo("고블린 토벌 증거", 20, false);
     return dropItem;
 }

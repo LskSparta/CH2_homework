@@ -14,9 +14,6 @@ void Slime::Attack(Player* player)
 
 ItemInfo Slime::DropItem()
 {
-	ItemInfo dropItem;
-	dropItem.name = "슬라임의 끈적한 젤리";
-	dropItem.consumable = false;
-	dropItem.price = 20;
+	ItemInfo dropItem = ItemInfo("슬라임의 끈적한 젤리", 20, false);
 	return dropItem;
 }

@@ -68,15 +68,51 @@ void showStatus()
     cout << "====================================" << endl;
 }
 
-void AddItemToInventory(ItemInfo newItem) {
+void AddItemToInventory(ItemInfo newItem, int itemCount = 1) {
     auto itr = inventory.find(newItem);
     if (itr == inventory.end()) {
-        inventory.insert({ newItem, 1 });
+        inventory.insert({ newItem, itemCount });
     }
     else {
-        itr->second++;
+        if (itemCount == 1) {
+            itr->second++;
+        }
+        else {
+            itr->second += itemCount;
+        }
     }
     cout << "인벤토리에 저장되었습니다." << endl;
+}
+
+vector<ItemInfo> ShowAndGetConsumableItem() {
+    auto itr = inventory.begin();
+    vector<ItemInfo> consumableItems;
+    while (itr != inventory.end())
+    {
+        ItemInfo item = itr->first;
+        if (!item.IsConsumable()) {
+            continue;
+        }
+        item.ShowItemInfo();
+        consumableItems.push_back(item);
+    }
+    if (consumableItems.empty()) {
+        cout << "사용 가능한 아이템이 없습니다" << endl;
+    }
+    return consumableItems;
+}
+
+void ConsumeItemInInventory(ItemInfo consumeItem, Player* target) {
+    auto itr = inventory.find(consumeItem);
+    if (itr == inventory.end()) {
+        cout << "에러 : 해당 아이템은 소지하고 있지 않습니다" << endl;
+        return;
+    }
+    itr->first.Consume(target);
+    itr->second--;
+    if (itr->second <= 0) {
+        inventory.erase(consumeItem);
+    }
 }
 
 void ShowItemsInInventory() {
@@ -88,7 +124,7 @@ void ShowItemsInInventory() {
     auto itr = inventory.begin();
     while (itr != inventory.end())
     {
-        cout << itr->first.name << " " << itr->second << " 개" << endl;
+        cout << itr->first.GetName() << " " << itr->second << " 개" << endl;
         itr++;
     }
 }
@@ -170,7 +206,7 @@ void StartBattle(Player* player) {
             cout << "\n★ 전투 승리!" << endl;
             for (int i = 0; i < monsters.size(); i++) {
                 ItemInfo dropItem = monsters[i]->DropItem();
-                cout << "-> " << dropItem.name << " 획득!" << endl;
+                cout << "-> " << dropItem.GetName() << " 획득!" << endl;
                 AddItemToInventory(dropItem);
             }
             break;
