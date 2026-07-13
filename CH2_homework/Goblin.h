@@ -8,6 +8,6 @@ public:
 
 	// Monster을(를) 통해 상속됨
 	void Attack(Player* player) override;
-	ItemInfo DropItem() override;
+	ItemInfo* DropItem() override;
 };
 

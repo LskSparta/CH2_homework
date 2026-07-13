@@ -21,6 +21,7 @@
 
 using namespace std;
 
+Player* player = nullptr;
 
 vector<Potions*> potions;
 
@@ -29,9 +30,9 @@ int hp = 0;
 int mp = 0;
 int attack = 0;
 int defense = 0;
-map<ItemInfo, int> inventory;
+map<ItemInfo*, int> inventory;
 
-static string eraseFrontPad(const string& str) {
+string eraseFrontPad(const string& str) {
     size_t firstNonSpace = str.find_first_not_of(' ');
     if (firstNonSpace == string::npos) {
         return str;
@@ -39,7 +40,7 @@ static string eraseFrontPad(const string& str) {
 	return str.substr(firstNonSpace);
 }
 
-static int StringToPossitiveInt(const string& str, string statName, int minValue) {
+int StringToPossitiveInt(const string& str, string statName, int minValue) {
     int value;
     try {
 		value = stoi(str);
@@ -68,10 +69,12 @@ void showStatus()
     cout << "====================================" << endl;
 }
 
-void AddItemToInventory(ItemInfo newItem, int itemCount = 1) {
+void AddItemToInventory(ItemInfo* newItem, int itemCount = 1) {
+    bool isFirst = false;
     auto itr = inventory.find(newItem);
     if (itr == inventory.end()) {
         inventory.insert({ newItem, itemCount });
+        isFirst = true;
     }
     else {
         if (itemCount == 1) {
@@ -81,37 +84,41 @@ void AddItemToInventory(ItemInfo newItem, int itemCount = 1) {
             itr->second += itemCount;
         }
     }
+    cout << "-> " << newItem->GetName() << itemCount << "개 획득!" << endl;
     cout << "인벤토리에 저장되었습니다." << endl;
+    if (!isFirst) {
+        delete newItem;
+    }
 }
 
-vector<ItemInfo> ShowAndGetConsumableItem() {
+vector<ItemInfo*> GetConsumableItem() {
     auto itr = inventory.begin();
-    vector<ItemInfo> consumableItems;
+    vector<ItemInfo*> consumableItems;
     while (itr != inventory.end())
     {
-        ItemInfo item = itr->first;
-        if (!item.IsConsumable()) {
+        const ItemInfo* item = itr->first;
+        if (!item->IsConsumable()) {
+            ++itr;
             continue;
         }
-        item.ShowItemInfo();
-        consumableItems.push_back(item);
-    }
-    if (consumableItems.empty()) {
-        cout << "사용 가능한 아이템이 없습니다" << endl;
+        consumableItems.push_back(itr->first);
+        ++itr;
     }
     return consumableItems;
 }
 
-void ConsumeItemInInventory(ItemInfo consumeItem, Player* target) {
+void ConsumeItemInInventory(ItemInfo* consumeItem, Player* target) {
     auto itr = inventory.find(consumeItem);
     if (itr == inventory.end()) {
         cout << "에러 : 해당 아이템은 소지하고 있지 않습니다" << endl;
         return;
     }
-    itr->first.Consume(target);
+    ItemInfo* item = itr->first;
+    item->Consume(target);
     itr->second--;
     if (itr->second <= 0) {
         inventory.erase(consumeItem);
+        delete item;
     }
 }
 
@@ -124,7 +131,7 @@ void ShowItemsInInventory() {
     auto itr = inventory.begin();
     while (itr != inventory.end())
     {
-        cout << itr->first.GetName() << " " << itr->second << " 개" << endl;
+        cout << itr->first->GetName() << " " << itr->second << " 개" << endl;
         itr++;
     }
 }
@@ -161,6 +168,21 @@ void SearchPotionByName(string potionName) {
     cout << "찾을 수 없습니다" << endl;
 }
 
+void SetPotion(int count, int* ptrPotionHp = nullptr, int* ptrPotionMp = nullptr) {
+    if (count < 0) {
+        cout << "Func::SetPotion count 변수는 0 이상" << endl;
+        return;
+    }
+
+    if (!ptrPotionHp || !ptrPotionMp) {
+        cout << "Func::SetPotion nullptr 발생" << endl;
+        return;
+    }
+
+    *ptrPotionHp = count;
+    *ptrPotionMp = count;
+}
+
 
 
 void ShowMainMenu() {
@@ -174,6 +196,54 @@ void ShowMainMenu() {
     cout << "===========================================" << endl;
 }
 
+bool SetStageUseItem() {
+    cout << "[ 인벤토리 ]" << endl;
+    vector<ItemInfo*> consumableItems = GetConsumableItem();
+    if (consumableItems.empty()) {
+        cout << "사용 가능한 아이템이 없습니다." << endl;
+        return false;
+    }
+
+    bool isStageOver = false;
+    while (!isStageOver)
+    {
+        for (int i = 0; i < consumableItems.size(); i++) {
+            ItemInfo* item = consumableItems[i];
+            int count = inventory.find(item)->second;
+            cout << i + 1 << ". " << item->GetName() << " :: " << count << " 개" << endl;
+            //item->ShowItemInfo();
+        }
+        cout << "0. 돌아가기" << endl;
+        string choiceStr;
+        getline(cin, choiceStr);
+        int choiceNum;
+        try
+        {
+            choiceNum = StringToPossitiveInt(choiceStr, "사용할 아이템 번호", 0);
+            if (choiceNum > consumableItems.size()) {
+                cout << "해당 번호 없음" << endl;
+                continue;
+            }
+        }
+        catch (const invalid_argument& e)
+        {
+            cout << e.what() << endl;
+            continue;
+        }
+        if (choiceNum == 0) {
+            return false;
+        }
+
+        //인덱스로 변경
+        choiceNum--;
+        ItemInfo* item = consumableItems[choiceNum];
+        ConsumeItemInInventory(item, player);
+
+        isStageOver = true;
+    }
+    return true;
+}
+
 void StartBattle(Player* player) {
     //STEP 5 - Monster 클래스 + 1:1 전투 (클래스 설계, 전투 루프) 시작
     //STEP 6 - 인벤토리 + 아이템 드롭 (STL vector)시작
@@ -181,18 +251,60 @@ void StartBattle(Player* player) {
     Monster* goblin = new Goblin("고블린", 120, 30, 20);
     vector<Monster*> monsters = { slime, goblin };
     cout << "\n\n\n" << "[ 전투 시작! ]" << endl;
+    PotionHp* potionHp = new PotionHp("HP 포션", 50, true);
+    PotionMp* potionMp = new PotionMp("MP 포션", 50, true);
+    int potionHpInitCount = 2;
+    int potionMpInitCount = 2;
+    AddItemToInventory(potionHp, potionHpInitCount);
+    AddItemToInventory(potionMp, potionMpInitCount);
+    cout << "HP 포션 " << potionHpInitCount << "개 MP 포션 " << potionMpInitCount << "개 지급 됨";
     while (!player->IsDead())
     {
         cout << "\n--- 플레이어 턴 ---" << endl;
-        for (int i = 0; i < monsters.size(); i++) {
-            Monster* monsterTarget = monsters[i];
-            if (monsterTarget->IsDead()) {
+        cout << "1. 공격" << endl;
+        cout << "2. 아이템 사용" << endl;
+        string actionStr;
+        getline(cin, actionStr);
+        int actionNum;
+        try
+        {
+            actionNum = StringToPossitiveInt(actionStr, "선택 : ", 1);
+            if (actionNum > 2) {
+                cout << "선택은 1 ~ 2 정수만 가능합니다." << endl;
                 continue;
             }
-            player->Attack(monsterTarget);
+        }
+        catch (const std::invalid_argument& e)
+        {
+            cout << e.what() << endl;
+            continue;
+        }
+        bool isDoBattle = true;
+        bool isItemChoosed = true;
+        switch (actionNum)
+        {
+        case 1:
+            break;
+        case 2:
+            isDoBattle = false;
+            isItemChoosed = SetStageUseItem();
             break;
         }
+        if (!isItemChoosed) {
+            continue;
+        }
 
+        if (isDoBattle) {
+            for (int i = 0; i < monsters.size(); i++) {
+                Monster* monsterTarget = monsters[i];
+                if (monsterTarget->IsDead()) {
+                    continue;
+                }
+                player->Attack(monsterTarget);
+                break;
+            }
+
+        }
 
         bool isVictory = true;
         for (int i = 0; i < monsters.size(); i++) {
@@ -205,10 +317,10 @@ void StartBattle(Player* player) {
         if (isVictory) {
             cout << "\n★ 전투 승리!" << endl;
             for (int i = 0; i < monsters.size(); i++) {
-                ItemInfo dropItem = monsters[i]->DropItem();
-                cout << "-> " << dropItem.GetName() << " 획득!" << endl;
+                ItemInfo* dropItem = monsters[i]->DropItem();
                 AddItemToInventory(dropItem);
             }
+            player->AddExp(500);
             break;
         }
 
@@ -290,7 +402,6 @@ void StartPotionStage() {
 
 int main()
 {
-    Player* player = nullptr;
     //STEP 1 - 캐릭터 생성 화면 시작
     cout << "===========================================\n";
     cout << "   [ 던전 탈출 텍스트 RPG ]\n";
@@ -357,8 +468,11 @@ int main()
     cout << "\n";
     showStatus();
 
-    int startHpPotionNum = 5;
-    int startMpPotionNum = 5;
+    int startHpPotionNum = 0;
+    int startMpPotionNum = 0;
+    //도전 STEP 1 - setPotion 함수 (포인터 심화) 시작
+    SetPotion(5, &startHpPotionNum, &startMpPotionNum);
+    //도전 STEP 1 - setPotion 함수 (포인터 심화) 종료
     int hpPotionHeal = 20;
     int mpPotionHeal = 20;
     cout << "\n\n";
@@ -507,7 +621,7 @@ int main()
     //STEP 4 - Player 클래스 + 직업 선택 (클래스, 상속, 다형성) 종료
 
 
-    potions.push_back(new Potions("HP포션", { { "허브", 1 } , {"맑은 물", 1} }));
+    potions.push_back(new Potions("HP 포션", { { "허브", 1 } , {"맑은 물", 1} }));
     potions.push_back(new Potions("스테미나포션", { { "허브", 1 } , {"베리", 1} }));
     
     bool isContinue = true;

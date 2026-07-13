@@ -22,7 +22,7 @@ public:
 	};
 	Monster(string name, int hp, int attak, int defense);
 	virtual void Attack(Player* player = nullptr) = 0;
-	virtual ItemInfo DropItem() = 0;
+	virtual ItemInfo* DropItem() = 0;
 	void Hit(int attackPower);
 	bool IsDead() const;
 };

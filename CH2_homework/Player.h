@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include"StructItem.h"
+#include "FLevelUp.h"
 #include<string>
 #include<map>
 
@@ -21,7 +22,10 @@ class Player
 		string job = "미정";
 		int level = 1;
 		int exp = 0;
+		int expMax = 100;
+		FLevelUp fLevelUp = FLevelUp();
 
+		void LevelUp();
 	public:
 		virtual ~Player() {};
 		Player(string name, int hp, int mp, int attack, int defense);
@@ -45,6 +49,8 @@ class Player
 
 		void printPlayerStatus();
 		void Hit(int attackPower);
+
+		void AddExp(int exp);
 
 		virtual void Attack(Monster* monster = nullptr) = 0;
 

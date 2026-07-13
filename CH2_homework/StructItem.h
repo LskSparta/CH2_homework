@@ -16,7 +16,9 @@ public:
     {
         return name < other.name;
     }
-    virtual void Consume(Player* player) const {};
+    virtual void Consume(Player* player) const {
+        cout << "ItemInfo Consume" << endl;
+    };
     void ShowItemInfo() const;
     string GetName() const;
     int GetPrice() const;

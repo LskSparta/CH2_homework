@@ -10,8 +10,8 @@ void Goblin::Attack(Player* player)
     player->Hit(attack);
 }
 
-ItemInfo Goblin::DropItem()
+ItemInfo* Goblin::DropItem()
 {
-    ItemInfo dropItem = ItemInfo("고블린 토벌 증거", 20, false);
+    ItemInfo* dropItem = new ItemInfo("고블린 토벌 증거", 20, false);
     return dropItem;
 }

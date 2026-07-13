@@ -12,8 +12,8 @@ void Slime::Attack(Player* player)
 	player->Hit(attack);
 }
 
-ItemInfo Slime::DropItem()
+ItemInfo* Slime::DropItem()
 {
-	ItemInfo dropItem = ItemInfo("슬라임의 끈적한 젤리", 20, false);
+	ItemInfo* dropItem = new ItemInfo("슬라임의 끈적한 젤리", 20, false);
 	return dropItem;
 }

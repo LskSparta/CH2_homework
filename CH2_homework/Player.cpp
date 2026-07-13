@@ -100,6 +100,7 @@ void Player::printPlayerStatus()
 	cout << "====================================" << endl;
 	cout << "닉네임: " << name << " | 직업: " << job << " | Lv : " << level << endl;
 	cout << "HP: " << hp << " | 공격력: " << attack << " | 방어력: " << defense << endl;
+	cout << "exp: " << exp << " | levelUp: " << expMax << endl;
 	cout << "====================================" << endl;
 }
 
@@ -112,6 +113,35 @@ void Player::Hit(int attackPower)
 	cout << name << "은(는) " << hitPoint << "만큼의 피해를 입었다." << endl;
 	hp = max(hp - hitPoint, 0) ;
 	cout << name << "의 체력 : " << hp << endl;
+}
+
+void Player::AddExp(int exp)
+{
+	this->exp += exp;
+	cout << "-> 경험치 +" << exp << "획득!" << "(현재 경험치: " << this->exp << "/" << expMax << ")" << endl;
+	if (this->exp < expMax) {
+		return;
+	}
+	cout << "... 레벨업 조건 충족" << endl;
+	while (this->exp >= expMax)
+	{
+		LevelUp();
+	}
+}
+
+void Player::LevelUp()
+{
+	this->exp -= expMax;
+	maxHp += fLevelUp.hpUp;
+	hp += fLevelUp.hpUp;
+	maxMp += fLevelUp.mpUp;
+	mp += fLevelUp.mpUp;
+	attack += fLevelUp.attackUp;
+	level++;
+	expMax = fLevelUp.GetNextExp(level);
+	cout << "레벨 업! lv." << (level - 1) << " -> Lv." << level << endl;
+	cout << "HP +" << fLevelUp.hpUp << ", MP +" << fLevelUp.mpUp << ", 공격력 +" << fLevelUp.attackUp << " 증가!" << endl;
+	cout << "(현재 경험치: " << exp << "/" << expMax << ")" << endl;
 }
 
 bool Player::IsDead() const
