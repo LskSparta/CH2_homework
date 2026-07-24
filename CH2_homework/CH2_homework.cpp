@@ -677,10 +677,10 @@ int main()
             break;
         }
     }
-
     for (int i = 0; i < potions.size(); i++) {
         delete potions[i];
     }
+    potions.clear();
     delete player;
     return 0;
 }
